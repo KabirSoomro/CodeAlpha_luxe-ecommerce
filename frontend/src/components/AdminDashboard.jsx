@@ -49,15 +49,31 @@ export default function AdminDashboard() {
     setLoading(true);
     setError(null);
     try {
-      const [prodsData, ordersData, sellersData] = await Promise.all([
+      // Fetch sellers separately so a failure doesn't block products/orders
+      const [prodsData, ordersData] = await Promise.all([
         api.getProducts(),
         api.getAllOrders(),
-        api.getAllSellers().catch(() => []),
       ]);
+
+      let sellersData = [];
+      try {
+        const sellerRes = await api.getAllSellers();
+        // API may return array directly or { data: [...] } or { sellers: [...] }
+        if (Array.isArray(sellerRes)) {
+          sellersData = sellerRes;
+        } else if (sellerRes && Array.isArray(sellerRes.data)) {
+          sellersData = sellerRes.data;
+        } else if (sellerRes && Array.isArray(sellerRes.sellers)) {
+          sellersData = sellerRes.sellers;
+        }
+      } catch (sellerErr) {
+        console.warn('Seller fetch failed (check admin token):', sellerErr.message);
+        setActionMessage('⚠️ Seller data unavailable — please log out and log back in as Admin, then refresh.');
+      }
 
       const prods = Array.isArray(prodsData) ? prodsData : [];
       const ords = Array.isArray(ordersData) ? ordersData : [];
-      const sellrs = Array.isArray(sellersData) ? sellersData : [];
+      const sellrs = sellersData;
 
       setProducts(prods);
       setOrders(ords);

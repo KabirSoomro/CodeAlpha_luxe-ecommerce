@@ -39,7 +39,7 @@ export default function AuthModal({ isOpen, onClose }) {
       setEmail('pendingseller@example.com');
       setPassword('seller123');
     } else if (userType === 'admin') {
-      setEmail('admin@example.com');
+      setEmail('kksoomro@gmail.com');
       setPassword('admin123');
     }
   };
