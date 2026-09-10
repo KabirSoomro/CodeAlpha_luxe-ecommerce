@@ -1,6 +1,6 @@
 // Unified API service for Luxe Premium E-Commerce Rebuild
 
-const BASE_URL = '';
+const BASE_URL = import.meta.env.VITE_API_URL || '';
 
 function getAuthToken() {
   try {
