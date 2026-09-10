@@ -43,6 +43,12 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
     },
+    accountId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+    },
   },
   {
     timestamps: true,
@@ -54,6 +60,22 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 };
 
 userSchema.pre('save', async function (next) {
+  // Auto-generate concise matching accountId if missing (e.g., Ali021, Kabeer045)
+  if (!this.accountId) {
+    const rawName = (this.name || 'User').trim().split(/\s+/)[0].replace(/[^a-zA-Z0-9]/g, '');
+    const base = (rawName.charAt(0).toUpperCase() + rawName.slice(1).toLowerCase()) || 'User';
+    
+    let candidate = '';
+    for (let i = 0; i < 25; i++) {
+      const num = Math.floor(10 + Math.random() * 990); // 010 to 999 (2 to 3 digits)
+      const suffix = num < 100 ? `0${num}` : `${num}`;
+      candidate = `${base}${suffix}`;
+      const existing = await mongoose.models.User.findOne({ accountId: candidate });
+      if (!existing) break;
+    }
+    this.accountId = candidate || `${base}${Math.floor(100 + Math.random() * 900)}`;
+  }
+
   if (!this.isModified('password')) {
     return next();
   }

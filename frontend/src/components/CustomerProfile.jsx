@@ -86,7 +86,10 @@ export default function CustomerProfile({ onNavigateShop }) {
               {user?.email}
             </p>
             <p className="text-[11px] text-luxe-secondary/80 pt-1">
-              Account ID: <span className="font-mono text-zinc-400">{user?._id}</span>
+              Account ID:{' '}
+              <span className="font-mono font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                {user?.accountId || user?._id}
+              </span>
             </p>
           </div>
 

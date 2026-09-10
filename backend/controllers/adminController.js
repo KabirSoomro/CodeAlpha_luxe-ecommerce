@@ -132,6 +132,7 @@ const approveSeller = async (req, res) => {
       message: `Seller "${seller.name}" has been approved successfully.`,
       seller: {
         _id: seller._id,
+        accountId: seller.accountId,
         name: seller.name,
         email: seller.email,
         storeName: seller.storeName,

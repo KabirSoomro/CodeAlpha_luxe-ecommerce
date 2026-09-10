@@ -5,18 +5,12 @@ const connectDB = async () => {
     const conn = await mongoose.connect(process.env.MONGO_URI);
     console.log(`MongoDB Connected: ${conn.connection.host}`);
 
-    // Auto-seed demo accounts (Admin, Approved Seller, Pending Seller, Buyer) if Admin is missing
+    // System init: ensure real admin exists, accountId backfill, clean old demo users
     try {
-      const User = require('../models/User');
-      const adminUser = await User.findOne({ email: 'admin@example.com' });
-      if (!adminUser) {
-        console.log('🔄 Initializing database: Auto-seeding default luxury accounts & inventory...');
-        const { seedDefaultData } = require('../seeder');
-        await seedDefaultData();
-        console.log('✅ Demo accounts & luxury products successfully initialized in database!');
-      }
+      const { seedDefaultData } = require('../seeder');
+      await seedDefaultData();
     } catch (seedErr) {
-      console.warn('Auto-seed check note:', seedErr.message);
+      console.warn('System init note:', seedErr.message);
     }
 
     return conn;

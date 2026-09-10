@@ -53,6 +53,7 @@ const registerUser = async (req, res) => {
     if (user) {
       res.status(201).json({
         _id: user._id,
+        accountId: user.accountId,
         name: user.name,
         email: user.email,
         role: user.role,
@@ -90,6 +91,7 @@ const authUser = async (req, res) => {
     if (user && (await user.matchPassword(cleanPassword))) {
       res.json({
         _id: user._id,
+        accountId: user.accountId,
         name: user.name,
         email: user.email,
         role: user.role,
@@ -116,6 +118,7 @@ const getUserProfile = async (req, res) => {
     }
     res.json({
       _id: req.user._id,
+      accountId: req.user.accountId,
       name: req.user.name,
       email: req.user.email,
       role: req.user.role,

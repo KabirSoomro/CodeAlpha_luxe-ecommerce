@@ -13,38 +13,19 @@ const User = require('./models/User');
 const Product = require('./models/Product');
 const Order = require('./models/Order');
 
-const sampleUsers = [
+// Fetch admin details from environment variables, or fallback to real project admin
+const adminEmail = process.env.ADMIN_EMAIL || 'kksoomro@gmail.com';
+const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+const adminName = process.env.ADMIN_NAME || 'Kabeer Soomro';
+
+const sampleUsers = adminEmail && adminPassword ? [
   {
-    name: 'Luxe Administrator',
-    email: 'admin@example.com',
-    password: 'admin123',
+    name: adminName,
+    email: adminEmail,
+    password: adminPassword,
     role: 'Admin',
   },
-  {
-    name: 'Luxe Customer',
-    email: 'customer@example.com',
-    password: 'customer123',
-    role: 'Buyer',
-  },
-  {
-    name: 'Geneva Luxury Seller (Approved)',
-    email: 'seller@example.com',
-    password: 'seller123',
-    role: 'Seller',
-    isApproved: true,
-    storeName: 'Geneva Horology House',
-    storeDescription: 'Premier vintage & certified luxury timepieces curation.',
-  },
-  {
-    name: 'Crown Gems (Pending Approval)',
-    email: 'pendingseller@example.com',
-    password: 'seller123',
-    role: 'Seller',
-    isApproved: false,
-    storeName: 'Crown Gems International',
-    storeDescription: 'Certified conflict-free artisanal diamonds and fine jewelry.',
-  },
-];
+] : [];
 
 const sampleProducts = [
   {
@@ -159,33 +140,67 @@ const sampleProducts = [
 
 const seedDefaultData = async () => {
   try {
-    // Delete existing demo users
-    const sampleEmails = sampleUsers.map((u) => u.email);
-    await User.deleteMany({
-      email: { $in: sampleEmails },
-    });
+    // Remove old demo accounts (cleanup from previous version)
+    const oldDemoEmails = [
+      'admin@example.com',
+      'customer@example.com',
+      'seller@example.com',
+      'pendingseller@example.com',
+    ];
+    await User.deleteMany({ email: { $in: oldDemoEmails } });
 
-    const createdUsers = [];
-    for (const u of sampleUsers) {
-      const created = await User.create(u);
-      createdUsers.push(created);
+    if (!adminEmail || !adminPassword) {
+      console.log('[Seeder] No ADMIN_EMAIL or ADMIN_PASSWORD provided in .env. Skipping admin seed.');
+      return;
     }
-    console.log(`[Seeder] Created ${createdUsers.length} demo users (admin & customer).`);
 
-    const adminUser = createdUsers.find((u) => u.role === 'Admin');
-
-    // Only populate products if none exist or if explicitly seeding
-    const productCount = await Product.countDocuments();
-    if (productCount === 0) {
-      const productsWithAdmin = sampleProducts.map((p) => ({
-        ...p,
-        user: adminUser._id,
-      }));
-      await Product.insertMany(productsWithAdmin);
-      console.log(`[Seeder] Inserted ${productsWithAdmin.length} luxury products.`);
+    // Upsert real admin account
+    const existing = await User.findOne({ email: adminEmail });
+    let adminUser;
+    if (!existing) {
+      adminUser = await User.create({
+        name: adminName,
+        email: adminEmail,
+        password: adminPassword,
+        role: 'Admin',
+      });
+      console.log(`[Seeder] Admin account ${adminEmail} created.`);
     } else {
-      console.log(`[Seeder] Existing catalog found with ${productCount} products.`);
+      // Ensure role is Admin
+      if (existing.role !== 'Admin') {
+        existing.role = 'Admin';
+        await existing.save();
+      }
+      adminUser = existing;
+      console.log(`[Seeder] Admin account ${adminEmail} already exists.`);
     }
+
+    // Ensure admin has an accountId
+    if (adminUser && !adminUser.accountId) {
+      adminUser.accountId = 'Kabeer021';
+      await adminUser.save();
+    }
+
+    // Backfill any existing users that are missing an accountId
+    const usersWithoutId = await User.find({ $or: [{ accountId: { $exists: false } }, { accountId: null }, { accountId: '' }] });
+    for (const u of usersWithoutId) {
+      const rawName = (u.name || 'User').trim().split(/\s+/)[0].replace(/[^a-zA-Z0-9]/g, '');
+      const base = (rawName.charAt(0).toUpperCase() + rawName.slice(1).toLowerCase()) || 'User';
+      let candidate = '';
+      for (let i = 0; i < 25; i++) {
+        const num = Math.floor(10 + Math.random() * 990);
+        const suffix = num < 100 ? `0${num}` : `${num}`;
+        candidate = `${base}${suffix}`;
+        const exists = await User.findOne({ accountId: candidate });
+        if (!exists) break;
+      }
+      u.accountId = candidate || `${base}${Math.floor(100 + Math.random() * 900)}`;
+      await u.save();
+    }
+
+    // Note: Product auto-seeding is intentionally disabled.
+    // Products must be listed dynamically by approved sellers in real-time.
+    console.log('[Seeder] Dynamic mode active: Product auto-seeding is disabled.');
   } catch (error) {
     console.error(`[Seeder Error] ${error.message}`);
     throw error;
@@ -199,25 +214,34 @@ const importData = async () => {
     // Clean existing catalog products created by sample names
     const sampleNames = sampleProducts.map((p) => p.name);
     await Product.deleteMany({ name: { $in: sampleNames } });
-    const sampleEmails = sampleUsers.map((u) => u.email);
-    await User.deleteMany({
-      email: { $in: sampleEmails },
-    });
 
-    const createdUsers = [];
-    for (const u of sampleUsers) {
-      const created = await User.create(u);
-      createdUsers.push(created);
+    // Remove old demo accounts
+    const oldDemoEmails = [
+      'admin@example.com',
+      'customer@example.com',
+      'seller@example.com',
+      'pendingseller@example.com',
+    ];
+    await User.deleteMany({ email: { $in: oldDemoEmails } });
+
+    if (!adminEmail || !adminPassword) {
+      console.log('[Seeder] No ADMIN_EMAIL or ADMIN_PASSWORD provided in .env. Cannot import data.');
+      process.exit(1);
     }
-    const adminUser = createdUsers.find((u) => u.role === 'Admin');
-    const sellerUser = createdUsers.find((u) => u.email === 'seller@example.com');
 
-    const productsWithUsers = sampleProducts.map((p, idx) => ({
-      ...p,
-      // First 3 products owned by the approved seller, rest by admin
-      user: idx < 3 && sellerUser ? sellerUser._id : adminUser._id,
-    }));
-    await Product.insertMany(productsWithUsers);
+    // Upsert real admin
+    let adminUser = await User.findOne({ email: adminEmail });
+    if (!adminUser) {
+      adminUser = await User.create({
+        name: adminName,
+        email: adminEmail,
+        password: adminPassword,
+        role: 'Admin',
+      });
+    }
+
+    const productsWithAdmin = sampleProducts.map((p) => ({ ...p, user: adminUser._id }));
+    await Product.insertMany(productsWithAdmin);
 
     console.log('✅ Luxe demo data successfully imported into MongoDB Atlas!');
     process.exit(0);

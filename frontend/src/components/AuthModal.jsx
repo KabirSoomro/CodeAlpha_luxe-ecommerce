@@ -26,24 +26,6 @@ export default function AuthModal({ isOpen, onClose }) {
     if (setError) setError(null);
   };
 
-  const handlePreFill = (userType) => {
-    setLocalError('');
-    setSuccessNotice('');
-    if (userType === 'customer') {
-      setEmail('customer@example.com');
-      setPassword('customer123');
-    } else if (userType === 'seller') {
-      setEmail('seller@example.com');
-      setPassword('seller123');
-    } else if (userType === 'pendingSeller') {
-      setEmail('pendingseller@example.com');
-      setPassword('seller123');
-    } else if (userType === 'admin') {
-      setEmail('kksoomro@gmail.com');
-      setPassword('admin123');
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLocalError('');
@@ -140,43 +122,6 @@ export default function AuthModal({ isOpen, onClose }) {
             </button>
           </div>
         </div>
-
-        {/* Quick Demo Pre-fills */}
-        {activeTab === 'login' && (
-          <div className="px-6 pt-3 space-y-1.5">
-            <div className="text-[10px] text-luxe-secondary text-center">Quick Login Profiles:</div>
-            <div className="flex flex-wrap items-center justify-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => handlePreFill('customer')}
-                className="text-[10px] font-semibold px-2.5 py-1 rounded-full border border-yellow-500/30 text-yellow-300 hover:bg-yellow-500/10 transition-colors"
-              >
-                Buyer
-              </button>
-              <button
-                type="button"
-                onClick={() => handlePreFill('seller')}
-                className="text-[10px] font-semibold px-2.5 py-1 rounded-full border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10 transition-colors"
-              >
-                Approved Seller
-              </button>
-              <button
-                type="button"
-                onClick={() => handlePreFill('pendingSeller')}
-                className="text-[10px] font-semibold px-2.5 py-1 rounded-full border border-orange-500/40 text-orange-300 hover:bg-orange-500/10 transition-colors"
-              >
-                Pending Seller
-              </button>
-              <button
-                type="button"
-                onClick={() => handlePreFill('admin')}
-                className="text-[10px] font-semibold px-2.5 py-1 rounded-full border border-amber-500/40 text-amber-300 hover:bg-amber-500/10 transition-colors"
-              >
-                Admin
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">

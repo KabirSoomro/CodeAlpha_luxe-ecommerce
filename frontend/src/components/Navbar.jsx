@@ -165,6 +165,11 @@ export default function Navbar({
                 >
                   <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
                   <span>Hi, {firstName}</span>
+                  {user?.accountId && (
+                    <span className="text-[10px] font-mono text-amber-400 bg-amber-500/15 px-1.5 py-0.5 rounded border border-amber-500/20">
+                      {user.accountId}
+                    </span>
+                  )}
                 </button>
 
                 {/* Seller Merchant Hub Link if Seller */}

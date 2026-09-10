@@ -162,8 +162,15 @@ export default function SellerDashboard({ onNavigateShop }) {
               <h1 className="text-2xl sm:text-3xl font-serif font-bold text-luxe-primary">
                 {user?.storeName || 'Merchant Atelier'}
               </h1>
-              <p className="text-xs text-luxe-secondary">
-                Registered Merchant: <span className="text-luxe-primary font-semibold">{user?.name}</span> ({user?.email})
+              <p className="text-xs text-luxe-secondary flex items-center flex-wrap gap-1.5 pt-0.5">
+                <span>Registered Merchant:</span>
+                <span className="text-luxe-primary font-semibold">{user?.name}</span>
+                <span>({user?.email})</span>
+                {user?.accountId && (
+                  <span className="font-mono text-[11px] font-bold text-amber-400 bg-amber-500/15 px-2 py-0.5 rounded border border-amber-500/20">
+                    ID: {user.accountId}
+                  </span>
+                )}
               </p>
             </div>
           </div>

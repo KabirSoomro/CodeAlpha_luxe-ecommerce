@@ -555,7 +555,14 @@ export default function AdminDashboard() {
                             <span>💎</span>
                             <span>{s.storeName || `${s.name}'s Boutique`}</span>
                           </p>
-                          <p className="text-[11px] text-luxe-secondary">{s.name}</p>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] text-luxe-secondary">{s.name}</span>
+                            {s.accountId && (
+                              <span className="font-mono text-[10px] font-bold text-amber-400 bg-amber-500/15 px-1.5 py-0.5 rounded border border-amber-500/20">
+                                {s.accountId}
+                              </span>
+                            )}
+                          </div>
                           {s.storeDescription && (
                             <p className="text-[10px] text-luxe-secondary/80 italic max-w-sm">
                               "{s.storeDescription}"
