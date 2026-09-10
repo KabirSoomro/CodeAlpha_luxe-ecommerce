@@ -24,7 +24,25 @@ const sampleUsers = [
     name: 'Luxe Customer',
     email: 'customer@example.com',
     password: 'customer123',
-    role: 'Customer',
+    role: 'Buyer',
+  },
+  {
+    name: 'Geneva Luxury Seller (Approved)',
+    email: 'seller@example.com',
+    password: 'seller123',
+    role: 'Seller',
+    isApproved: true,
+    storeName: 'Geneva Horology House',
+    storeDescription: 'Premier vintage & certified luxury timepieces curation.',
+  },
+  {
+    name: 'Crown Gems (Pending Approval)',
+    email: 'pendingseller@example.com',
+    password: 'seller123',
+    role: 'Seller',
+    isApproved: false,
+    storeName: 'Crown Gems International',
+    storeDescription: 'Certified conflict-free artisanal diamonds and fine jewelry.',
   },
 ];
 
@@ -142,8 +160,9 @@ const sampleProducts = [
 const seedDefaultData = async () => {
   try {
     // Delete existing demo users
+    const sampleEmails = sampleUsers.map((u) => u.email);
     await User.deleteMany({
-      email: { $in: ['admin@example.com', 'customer@example.com'] },
+      email: { $in: sampleEmails },
     });
 
     const createdUsers = [];
@@ -180,8 +199,9 @@ const importData = async () => {
     // Clean existing catalog products created by sample names
     const sampleNames = sampleProducts.map((p) => p.name);
     await Product.deleteMany({ name: { $in: sampleNames } });
+    const sampleEmails = sampleUsers.map((u) => u.email);
     await User.deleteMany({
-      email: { $in: ['admin@example.com', 'customer@example.com'] },
+      email: { $in: sampleEmails },
     });
 
     const createdUsers = [];
@@ -190,12 +210,14 @@ const importData = async () => {
       createdUsers.push(created);
     }
     const adminUser = createdUsers.find((u) => u.role === 'Admin');
+    const sellerUser = createdUsers.find((u) => u.email === 'seller@example.com');
 
-    const productsWithAdmin = sampleProducts.map((p) => ({
+    const productsWithUsers = sampleProducts.map((p, idx) => ({
       ...p,
-      user: adminUser._id,
+      // First 3 products owned by the approved seller, rest by admin
+      user: idx < 3 && sellerUser ? sellerUser._id : adminUser._id,
     }));
-    await Product.insertMany(productsWithAdmin);
+    await Product.insertMany(productsWithUsers);
 
     console.log('✅ Luxe demo data successfully imported into MongoDB Atlas!');
     process.exit(0);

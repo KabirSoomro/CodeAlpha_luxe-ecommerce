@@ -6,11 +6,13 @@ const userSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
+      trim: true,
     },
     email: {
       type: String,
       required: true,
       unique: true,
+      lowercase: true,
     },
     password: {
       type: String,
@@ -18,8 +20,28 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['Admin', 'Customer'],
-      default: 'Customer',
+      enum: ['Admin', 'Seller', 'Buyer', 'Customer'],
+      default: 'Buyer',
+    },
+    // Seller-specific fields
+    isApproved: {
+      type: Boolean,
+      default: false, // Seller must be approved by Admin before listing products
+    },
+    storeName: {
+      type: String,
+      default: '',
+    },
+    storeDescription: {
+      type: String,
+      default: '',
+    },
+    approvedAt: {
+      type: Date,
+    },
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
     },
   },
   {

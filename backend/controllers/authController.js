@@ -7,28 +7,50 @@ const generateToken = (id) => {
   });
 };
 
-// @desc    Register a new user
+// @desc    Register a new user (Buyer or Seller)
 // @route   POST /api/auth/register
 // @access  Public
 const registerUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role, storeName, storeDescription } = req.body;
+
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Please provide name, email, and password' });
     }
 
     const userExists = await User.findOne({ email });
     if (userExists) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({ message: 'User already exists with this email' });
     }
 
-    const user = await User.create({ name, email, password });
+    // Only allow Buyer or Seller registration via this endpoint (Admin must be set manually)
+    const allowedRoles = ['Buyer', 'Seller'];
+    const assignedRole = allowedRoles.includes(role) ? role : 'Buyer';
+
+    const userData = {
+      name,
+      email,
+      password,
+      role: assignedRole,
+    };
+
+    // If registering as Seller, capture store info
+    if (assignedRole === 'Seller') {
+      userData.storeName = storeName || `${name}'s Store`;
+      userData.storeDescription = storeDescription || '';
+      userData.isApproved = false; // Must be approved by Admin
+    }
+
+    const user = await User.create(userData);
+
     if (user) {
       res.status(201).json({
         _id: user._id,
         name: user.name,
         email: user.email,
         role: user.role,
+        isApproved: user.isApproved,
+        storeName: user.storeName,
         token: generateToken(user._id),
       });
     } else {
@@ -53,6 +75,9 @@ const authUser = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        isApproved: user.isApproved,
+        storeName: user.storeName,
+        storeDescription: user.storeDescription,
         token: generateToken(user._id),
       });
     } else {
@@ -76,6 +101,9 @@ const getUserProfile = async (req, res) => {
       name: req.user.name,
       email: req.user.email,
       role: req.user.role,
+      isApproved: req.user.isApproved,
+      storeName: req.user.storeName,
+      storeDescription: req.user.storeDescription,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

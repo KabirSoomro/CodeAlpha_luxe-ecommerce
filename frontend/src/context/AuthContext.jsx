@@ -26,6 +26,9 @@ export function AuthProvider({ children }) {
 
   const isAuthenticated = Boolean(token && user);
   const isAdmin = Boolean(user && (user.role === 'Admin' || user.isAdmin === true));
+  const isSeller = Boolean(user && user.role === 'Seller');
+  const isApprovedSeller = Boolean(user && user.role === 'Seller' && user.isApproved);
+  const isBuyer = Boolean(user && (user.role === 'Buyer' || user.role === 'Customer'));
 
   const login = async (email, password) => {
     setLoading(true);
@@ -46,11 +49,24 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const register = async (name, email, password) => {
+  const register = async (nameOrData, email, password, role = 'Buyer', storeName = '', storeDescription = '') => {
     setLoading(true);
     setError(null);
     try {
-      const data = await api.register({ name, email, password });
+      let payload;
+      if (typeof nameOrData === 'object' && nameOrData !== null) {
+        payload = nameOrData;
+      } else {
+        payload = {
+          name: nameOrData,
+          email,
+          password,
+          role,
+          storeName,
+          storeDescription,
+        };
+      }
+      const data = await api.register(payload);
       setToken(data.token);
       setUser(data);
       localStorage.setItem('luxe_token', data.token);
@@ -62,6 +78,22 @@ export function AuthProvider({ children }) {
       const msg = err.message || 'Registration failed';
       setError(msg);
       throw err;
+    }
+  };
+
+  const refreshProfile = async () => {
+    if (!token) return null;
+    try {
+      const profile = await api.getUserProfile();
+      setUser((prev) => {
+        const updated = { ...prev, ...profile };
+        localStorage.setItem('luxe_user', JSON.stringify(updated));
+        return updated;
+      });
+      return profile;
+    } catch (err) {
+      console.warn('Could not refresh profile:', err);
+      return null;
     }
   };
 
@@ -85,14 +117,18 @@ export function AuthProvider({ children }) {
         token,
         isAuthenticated,
         isAdmin,
+        isSeller,
+        isApprovedSeller,
+        isBuyer,
         login,
         register,
         logout,
+        refreshProfile,
         getToken: () => token || localStorage.getItem('luxe_token'),
         getUser: () => user,
       };
     }
-  }, [user, token, isAuthenticated, isAdmin]);
+  }, [user, token, isAuthenticated, isAdmin, isSeller, isApprovedSeller, isBuyer]);
 
   return (
     <AuthContext.Provider
@@ -101,11 +137,15 @@ export function AuthProvider({ children }) {
         token,
         isAuthenticated,
         isAdmin,
+        isSeller,
+        isApprovedSeller,
+        isBuyer,
         loading,
         error,
         login,
         register,
         logout,
+        refreshProfile,
         setError,
       }}
     >

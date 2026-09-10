@@ -72,6 +72,7 @@ export const api = {
   createProduct: (productData) => api.post('/api/products', productData),
   updateProduct: (id, productData) => api.put(`/api/products/${id}`, productData),
   deleteProduct: (id) => api.delete(`/api/products/${id}`),
+  getMySellerProducts: () => api.get('/api/products/my-products'),
 
   // Auth
   login: (credentials) => api.post('/api/auth/login', credentials),
@@ -88,6 +89,9 @@ export const api = {
   getAdminMetrics: () => api.get('/api/admin/metrics'),
   getAdminProducts: () => api.get('/api/admin/products'),
   getAdminOrders: () => api.get('/api/admin/orders'),
+  getAllSellers: () => api.get('/api/admin/sellers'),
+  approveSeller: (id) => api.put(`/api/admin/sellers/${id}/approve`),
+  rejectSeller: (id) => api.put(`/api/admin/sellers/${id}/reject`),
 };
 
 export default api;

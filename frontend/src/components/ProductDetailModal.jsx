@@ -72,9 +72,15 @@ export default function ProductDetailModal({ product, onClose }) {
               <p className="text-xs uppercase font-bold tracking-widest text-luxe-secondary mb-1">
                 {product.brand || 'Luxe Atelier'}
               </p>
-              <h2 className="text-2xl font-serif font-bold text-luxe-primary mb-2">
+              <h2 className="text-2xl font-serif font-bold text-luxe-primary mb-1">
                 {product.name}
               </h2>
+              {product.user?.storeName && (
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-300 text-[11px] font-semibold mb-2">
+                  <span>💎 Boutique:</span>
+                  <span>{product.user.storeName}</span>
+                </div>
+              )}
 
               {/* Rating */}
               <div className="flex items-center gap-2 mb-4">

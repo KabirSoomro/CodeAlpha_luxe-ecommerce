@@ -7,17 +7,19 @@ import CheckoutModal from './components/CheckoutModal';
 import AuthModal from './components/AuthModal';
 import CustomerProfile from './components/CustomerProfile';
 import AdminDashboard from './components/AdminDashboard';
+import SellerDashboard from './components/SellerDashboard';
 import { useAuth } from './context/AuthContext';
 import api from './services/api';
 
 export default function App() {
   const { user, isAdmin, isAuthenticated } = useAuth();
 
-  // View state: 'catalog' | 'profile' | 'admin'
+  // View state: 'catalog' | 'profile' | 'admin' | 'seller'
   const [activeView, setActiveView] = useState(() => {
     if (typeof window !== 'undefined') {
       const path = window.location.pathname.toLowerCase();
       if (path.includes('admin')) return 'admin';
+      if (path.includes('seller')) return 'seller';
       if (path.includes('profile')) return 'profile';
     }
     return 'catalog';
@@ -98,6 +100,8 @@ export default function App() {
       const path = window.location.pathname.toLowerCase();
       if (path.includes('admin')) {
         setActiveView('admin');
+      } else if (path.includes('seller')) {
+        setActiveView('seller');
       } else if (path.includes('profile')) {
         setActiveView('profile');
       } else {
@@ -177,6 +181,11 @@ export default function App() {
         {/* Customer Profile View */}
         {activeView === 'profile' && (
           <CustomerProfile onNavigateShop={() => handleViewChange('catalog')} />
+        )}
+
+        {/* Merchant / Seller Dashboard View */}
+        {activeView === 'seller' && (
+          <SellerDashboard onNavigateShop={() => handleViewChange('catalog')} />
         )}
 
         {/* Admin Dashboard View */}

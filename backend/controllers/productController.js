@@ -20,7 +20,9 @@ const getProducts = async (req, res) => {
     else if (req.query.sort === 'top_rated') sortOption = { averageRating: -1 };
     else if (req.query.sort === 'newest') sortOption = { createdAt: -1 };
 
-    const products = await Product.find({ ...keyword, ...category }).sort(sortOption);
+    const products = await Product.find({ ...keyword, ...category })
+      .populate('user', 'name storeName')
+      .sort(sortOption);
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -32,7 +34,7 @@ const getProducts = async (req, res) => {
 // @access  Public
 const getProductById = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findById(req.params.id).populate('user', 'name storeName');
     if (product) {
       res.json(product);
     } else {
@@ -43,9 +45,9 @@ const getProductById = async (req, res) => {
   }
 };
 
-// @desc    Create a product
+// @desc    Create a product (Admin OR Approved Seller)
 // @route   POST /api/products
-// @access  Private/Admin
+// @access  Private/Admin or ApprovedSeller
 const createProduct = async (req, res) => {
   try {
     const { name, price, description, image, brand, category, countInStock } = req.body;
@@ -83,7 +85,7 @@ const createProduct = async (req, res) => {
 
 // @desc    Update a product
 // @route   PUT /api/products/:id
-// @access  Private/Admin
+// @access  Private/Admin or Owner Seller
 const updateProduct = async (req, res) => {
   try {
     const { name, price, description, image, brand, category, countInStock } = req.body;
@@ -91,6 +93,11 @@ const updateProduct = async (req, res) => {
 
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
+    }
+
+    // Sellers can only edit their own products
+    if (req.user.role === 'Seller' && product.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'You can only edit your own products' });
     }
 
     if (name !== undefined) product.name = name;
@@ -120,7 +127,7 @@ const updateProduct = async (req, res) => {
 
 // @desc    Delete a product
 // @route   DELETE /api/products/:id
-// @access  Private/Admin
+// @access  Private/Admin or Owner Seller
 const deleteProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -128,8 +135,25 @@ const deleteProduct = async (req, res) => {
       return res.status(404).json({ message: 'Product not found' });
     }
 
+    // Sellers can only delete their own products
+    if (req.user.role === 'Seller' && product.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'You can only delete your own products' });
+    }
+
     await Product.deleteOne({ _id: req.params.id });
     res.json({ message: 'Product removed' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get seller's own products
+// @route   GET /api/products/my-products
+// @access  Private/ApprovedSeller
+const getMyProducts = async (req, res) => {
+  try {
+    const products = await Product.find({ user: req.user._id }).sort({ createdAt: -1 });
+    res.json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -181,5 +205,6 @@ module.exports = {
   createProduct,
   updateProduct,
   deleteProduct,
+  getMyProducts,
   createProductReview,
 };
