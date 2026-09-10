@@ -131,9 +131,59 @@ const getUserProfile = async (req, res) => {
   }
 };
 
+// @desc    Update user profile (Name, Email, Password, Store Info)
+// @route   PUT /api/auth/profile
+// @access  Private
+const updateUserProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (req.body.name) user.name = req.body.name.trim();
+    if (req.body.email) {
+      const newEmail = req.body.email.trim().toLowerCase();
+      // Check if email taken by another user
+      const existing = await User.findOne({ email: newEmail, _id: { $ne: user._id } });
+      if (existing) {
+        return res.status(400).json({ message: 'Email address is already in use' });
+      }
+      user.email = newEmail;
+    }
+
+    if (req.body.password && req.body.password.trim().length >= 6) {
+      user.password = req.body.password.trim();
+    }
+
+    if (user.role === 'Seller') {
+      if (req.body.storeName) user.storeName = req.body.storeName.trim();
+      if (req.body.storeDescription !== undefined) user.storeDescription = req.body.storeDescription.trim();
+    }
+
+    const updatedUser = await user.save();
+
+    res.json({
+      _id: updatedUser._id,
+      accountId: updatedUser.accountId,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      role: updatedUser.role,
+      isApproved: updatedUser.isApproved,
+      storeName: updatedUser.storeName,
+      storeDescription: updatedUser.storeDescription,
+      token: generateToken(updatedUser._id),
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   registerUser,
   authUser,
   getUserProfile,
+  updateUserProfile,
   generateToken,
 };

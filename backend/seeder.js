@@ -13,10 +13,10 @@ const User = require('./models/User');
 const Product = require('./models/Product');
 const Order = require('./models/Order');
 
-// Fetch admin details from environment variables, or fallback to real project admin
-const adminEmail = process.env.ADMIN_EMAIL || 'kksoomro@gmail.com';
-const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
-const adminName = process.env.ADMIN_NAME || 'Kabeer Soomro';
+// Fetch admin details purely from environment variables (No hardcoded credentials)
+const adminEmail = process.env.ADMIN_EMAIL;
+const adminPassword = process.env.ADMIN_PASSWORD;
+const adminName = process.env.ADMIN_NAME || 'Luxe Administrator';
 
 const sampleUsers = adminEmail && adminPassword ? [
   {

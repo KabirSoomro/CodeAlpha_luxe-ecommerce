@@ -3,11 +3,22 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
 export default function CustomerProfile({ onNavigateShop }) {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, updateProfile } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
+
+  // Profile Edit Modal state
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editPassword, setEditPassword] = useState('');
+  const [editStoreName, setEditStoreName] = useState('');
+  const [editStoreDescription, setEditStoreDescription] = useState('');
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState('');
+  const [editSuccess, setEditSuccess] = useState('');
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -16,6 +27,51 @@ export default function CustomerProfile({ onNavigateShop }) {
       setLoading(false);
     }
   }, [isAuthenticated]);
+
+  const openEditModal = () => {
+    setEditName(user?.name || '');
+    setEditEmail(user?.email || '');
+    setEditPassword('');
+    setEditStoreName(user?.storeName || '');
+    setEditStoreDescription(user?.storeDescription || '');
+    setEditError('');
+    setEditSuccess('');
+    setShowEditModal(true);
+  };
+
+  const handleProfileSubmit = async (e) => {
+    e.preventDefault();
+    setEditLoading(true);
+    setEditError('');
+    setEditSuccess('');
+    try {
+      const payload = {
+        name: editName,
+        email: editEmail,
+      };
+      if (editPassword.trim()) {
+        if (editPassword.trim().length < 6) {
+          setEditError('Password must be at least 6 characters');
+          setEditLoading(false);
+          return;
+        }
+        payload.password = editPassword.trim();
+      }
+      if (user?.role === 'Seller') {
+        payload.storeName = editStoreName;
+        payload.storeDescription = editStoreDescription;
+      }
+      await updateProfile(payload);
+      setEditSuccess('Profile updated successfully!');
+      setTimeout(() => {
+        setShowEditModal(false);
+      }, 1200);
+    } catch (err) {
+      setEditError(err.message || 'Failed to update profile');
+    } finally {
+      setEditLoading(false);
+    }
+  };
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -94,7 +150,14 @@ export default function CustomerProfile({ onNavigateShop }) {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={openEditModal}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 text-black text-xs font-bold shadow-md hover:scale-105 transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              <span>✏️</span>
+              <span>Edit Profile</span>
+            </button>
             <button
               onClick={fetchOrders}
               className="px-4 py-2 rounded-xl glass border border-luxe-glassBorder hover:border-yellow-500/40 text-xs font-semibold text-luxe-secondary hover:text-luxe-primary transition-all flex items-center gap-1.5"
@@ -271,6 +334,120 @@ export default function CustomerProfile({ onNavigateShop }) {
           )}
         </div>
       </div>
+
+      {/* Edit Profile Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fadeIn">
+          <div className="glass rounded-3xl border border-luxe-glassBorder w-full max-w-lg overflow-hidden shadow-2xl space-y-4 p-6 sm:p-8">
+            <div className="flex items-center justify-between pb-4 border-b border-luxe-glassBorder">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">✏️</span>
+                <h3 className="text-lg font-serif font-bold text-luxe-primary">
+                  Update Member Credentials
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="text-luxe-secondary hover:text-luxe-primary text-xl font-bold p-1 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            {editSuccess && (
+              <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs flex items-center gap-2">
+                <span>✅</span>
+                <span>{editSuccess}</span>
+              </div>
+            )}
+
+            {editError && (
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2">
+                <span>⚠️</span>
+                <span>{editError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleProfileSubmit} className="space-y-4 text-xs">
+              <div>
+                <label className="block text-luxe-secondary font-semibold mb-1">Full Name</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  required
+                  className="w-full px-4 py-2.5 rounded-xl glass border border-luxe-glassBorder text-luxe-primary focus:border-amber-400 focus:outline-none transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-luxe-secondary font-semibold mb-1">Email Address</label>
+                <input
+                  type="email"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  required
+                  className="w-full px-4 py-2.5 rounded-xl glass border border-luxe-glassBorder text-luxe-primary focus:border-amber-400 focus:outline-none transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-luxe-secondary font-semibold mb-1">
+                  New Password <span className="text-[10px] text-luxe-secondary font-normal">(Leave blank to keep unchanged)</span>
+                </label>
+                <input
+                  type="password"
+                  value={editPassword}
+                  onChange={(e) => setEditPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full px-4 py-2.5 rounded-xl glass border border-luxe-glassBorder text-luxe-primary focus:border-amber-400 focus:outline-none transition-all"
+                />
+              </div>
+
+              {user?.role === 'Seller' && (
+                <>
+                  <div>
+                    <label className="block text-luxe-secondary font-semibold mb-1">Boutique Name</label>
+                    <input
+                      type="text"
+                      value={editStoreName}
+                      onChange={(e) => setEditStoreName(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl glass border border-luxe-glassBorder text-luxe-primary focus:border-amber-400 focus:outline-none transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-luxe-secondary font-semibold mb-1">Boutique Description</label>
+                    <textarea
+                      value={editStoreDescription}
+                      onChange={(e) => setEditStoreDescription(e.target.value)}
+                      rows="2"
+                      className="w-full px-4 py-2.5 rounded-xl glass border border-luxe-glassBorder text-luxe-primary focus:border-amber-400 focus:outline-none transition-all resize-none"
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-luxe-glassBorder">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2 rounded-xl glass border border-luxe-glassBorder text-luxe-secondary hover:text-luxe-primary transition-all font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={editLoading}
+                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 text-black text-xs font-bold shadow-md hover:scale-105 transition-all disabled:opacity-50 cursor-pointer"
+                >
+                  {editLoading ? 'Saving...' : 'Save Profile Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

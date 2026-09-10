@@ -97,6 +97,27 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const updateProfile = async (userData) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await api.updateUserProfile(userData);
+      if (data.token) {
+        setToken(data.token);
+        localStorage.setItem('luxe_token', data.token);
+      }
+      setUser(data);
+      localStorage.setItem('luxe_user', JSON.stringify(data));
+      setLoading(false);
+      return data;
+    } catch (err) {
+      setLoading(false);
+      const msg = err.message || 'Profile update failed';
+      setError(msg);
+      throw err;
+    }
+  };
+
   const logout = () => {
     setToken(null);
     setUser(null);
@@ -124,6 +145,7 @@ export function AuthProvider({ children }) {
         register,
         logout,
         refreshProfile,
+        updateProfile,
         getToken: () => token || localStorage.getItem('luxe_token'),
         getUser: () => user,
       };
@@ -146,6 +168,7 @@ export function AuthProvider({ children }) {
         register,
         logout,
         refreshProfile,
+        updateProfile,
         setError,
       }}
     >

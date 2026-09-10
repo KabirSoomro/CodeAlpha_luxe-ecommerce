@@ -78,6 +78,7 @@ export const api = {
   login: (credentials) => api.post('/api/auth/login', credentials),
   register: (userData) => api.post('/api/auth/register', userData),
   getUserProfile: () => api.get('/api/auth/profile'),
+  updateUserProfile: (userData) => api.put('/api/auth/profile', userData),
 
   // Orders
   createOrder: (orderData) => api.post('/api/orders', orderData),

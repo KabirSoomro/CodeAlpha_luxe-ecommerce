@@ -15,6 +15,8 @@
   --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   --badge-in-stock: #00ff64;
   --badge-out-stock: #ff3c3c;
+  --gold-primary: #d4af37;
+  --gold-glow: rgba(212, 175, 55, 0.3);
 }
 
 [data-theme="light"],
@@ -29,6 +31,8 @@
   --card-shadow: 0 10px 25px rgba(0, 0, 0, 0.07);
   --badge-in-stock: #059669;
   --badge-out-stock: #dc2626;
+  --gold-primary: #b48a1d;
+  --gold-glow: rgba(180, 138, 29, 0.2);
 }
 
 body {
@@ -37,13 +41,41 @@ body {
   font-family: 'Plus Jakarta Sans', sans-serif;
   margin: 0;
   padding: 0;
+  overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Custom Luxury Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-color);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.25);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.5);
 }
 
 .glass {
   background: var(--glass-bg);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--glass-border);
+}
+
+.glass-gold {
+  background: rgba(212, 175, 55, 0.04);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(212, 175, 55, 0.2);
 }
 
 .stock-badge {
@@ -90,8 +122,31 @@ body {
   }
 }
 
+@keyframes goldShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.gold-shimmer {
+  background: linear-gradient(90deg, #d4af37 0%, #fff 50%, #d4af37 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: goldShimmer 4s infinite linear;
+}
+
 .product-card {
   animation: fadeInStaggered 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
 }
 
 .badge-pulse {
