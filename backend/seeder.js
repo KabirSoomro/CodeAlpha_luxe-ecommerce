@@ -149,10 +149,6 @@ const seedDefaultData = async () => {
     ];
     await User.deleteMany({ email: { $in: oldDemoEmails } });
 
-    // Clean out default sample products from database to keep catalog dynamic
-    const sampleNames = sampleProducts.map((p) => p.name);
-    await Product.deleteMany({ name: { $in: sampleNames } });
-
     if (!adminEmail || !adminPassword) {
       console.log('[Seeder] No ADMIN_EMAIL or ADMIN_PASSWORD provided in .env. Skipping admin seed.');
       return;
@@ -185,26 +181,18 @@ const seedDefaultData = async () => {
       await adminUser.save();
     }
 
-    // Backfill any existing users that are missing an accountId
-    const usersWithoutId = await User.find({ $or: [{ accountId: { $exists: false } }, { accountId: null }, { accountId: '' }] });
-    for (const u of usersWithoutId) {
-      const rawName = (u.name || 'User').trim().split(/\s+/)[0].replace(/[^a-zA-Z0-9]/g, '');
-      const base = (rawName.charAt(0).toUpperCase() + rawName.slice(1).toLowerCase()) || 'User';
-      let candidate = '';
-      for (let i = 0; i < 25; i++) {
-        const num = Math.floor(10 + Math.random() * 990);
-        const suffix = num < 100 ? `0${num}` : `${num}`;
-        candidate = `${base}${suffix}`;
-        const exists = await User.findOne({ accountId: candidate });
-        if (!exists) break;
-      }
-      u.accountId = candidate || `${base}${Math.floor(100 + Math.random() * 900)}`;
-      await u.save();
+    // Populate catalog with luxury sample products if database is empty
+    const productCount = await Product.countDocuments();
+    if (productCount === 0) {
+      const productsWithAdmin = sampleProducts.map((p) => ({
+        ...p,
+        user: adminUser._id,
+      }));
+      await Product.insertMany(productsWithAdmin);
+      console.log(`[Seeder] Inserted ${productsWithAdmin.length} default luxury products.`);
+    } else {
+      console.log(`[Seeder] Existing catalog found with ${productCount} products.`);
     }
-
-    // Note: Product auto-seeding is intentionally disabled.
-    // Products must be listed dynamically by approved sellers in real-time.
-    console.log('[Seeder] Dynamic mode active: Product auto-seeding is disabled.');
   } catch (error) {
     console.error(`[Seeder Error] ${error.message}`);
     throw error;
