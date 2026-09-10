@@ -149,6 +149,10 @@ const seedDefaultData = async () => {
     ];
     await User.deleteMany({ email: { $in: oldDemoEmails } });
 
+    // Clean out default sample products from database to keep catalog dynamic
+    const sampleNames = sampleProducts.map((p) => p.name);
+    await Product.deleteMany({ name: { $in: sampleNames } });
+
     if (!adminEmail || !adminPassword) {
       console.log('[Seeder] No ADMIN_EMAIL or ADMIN_PASSWORD provided in .env. Skipping admin seed.');
       return;
