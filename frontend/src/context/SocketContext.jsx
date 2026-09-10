@@ -74,10 +74,7 @@ export function SocketProvider({ children }) {
 
   useEffect(() => {
     // Connect to same origin or port 5000 in dev
-    const socketUrl =
-      typeof window !== 'undefined' && window.location.port === '5173'
-        ? 'http://localhost:5000'
-        : '';
+    const socketUrl = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' && window.location.port === '5173' ? 'http://localhost:5000' : '');
 
     const socketInstance = io(socketUrl, {
       transports: ['websocket', 'polling'],
