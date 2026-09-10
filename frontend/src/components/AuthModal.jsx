@@ -10,6 +10,8 @@ export default function AuthModal({ isOpen, onClose }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [storeName, setStoreName] = useState('');
   const [storeDescription, setStoreDescription] = useState('');
   const [localError, setLocalError] = useState('');
@@ -300,32 +302,74 @@ export default function AuthModal({ isOpen, onClose }) {
           </div>
 
           <div>
-            <label className="block text-[11px] font-medium text-luxe-secondary mb-1">
-              Password
-            </label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full bg-black/20 dark:bg-white/5 border border-luxe-glassBorder rounded-xl px-3.5 py-2.5 text-xs text-luxe-primary focus:outline-none focus:border-yellow-500/50"
-            />
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-[11px] font-medium text-luxe-secondary">
+                Password
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="text-[10px] text-amber-400 hover:text-amber-300 font-semibold transition-colors flex items-center gap-1 cursor-pointer select-none"
+              >
+                <span>{showPassword ? '🙈' : '👁️'}</span>
+                <span>{showPassword ? 'Hide' : 'Show'}</span>
+              </button>
+            </div>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full bg-black/20 dark:bg-white/5 border border-luxe-glassBorder rounded-xl pl-3.5 pr-10 py-2.5 text-xs text-luxe-primary focus:outline-none focus:border-yellow-500/50"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                tabIndex={-1}
+                className="absolute right-3 top-2.5 text-sm text-luxe-secondary hover:text-yellow-400 transition-colors cursor-pointer"
+                title={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? '🙈' : '👁️'}
+              </button>
+            </div>
           </div>
 
           {activeTab === 'register' && (
             <div>
-              <label className="block text-[11px] font-medium text-luxe-secondary mb-1">
-                Confirm Password
-              </label>
-              <input
-                type="password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full bg-black/20 dark:bg-white/5 border border-luxe-glassBorder rounded-xl px-3.5 py-2.5 text-xs text-luxe-primary focus:outline-none focus:border-yellow-500/50"
-              />
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-[11px] font-medium text-luxe-secondary">
+                  Confirm Password
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="text-[10px] text-amber-400 hover:text-amber-300 font-semibold transition-colors flex items-center gap-1 cursor-pointer select-none"
+                >
+                  <span>{showConfirmPassword ? '🙈' : '👁️'}</span>
+                  <span>{showConfirmPassword ? 'Hide' : 'Show'}</span>
+                </button>
+              </div>
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full bg-black/20 dark:bg-white/5 border border-luxe-glassBorder rounded-xl pl-3.5 pr-10 py-2.5 text-xs text-luxe-primary focus:outline-none focus:border-yellow-500/50"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  tabIndex={-1}
+                  className="absolute right-3 top-2.5 text-sm text-luxe-secondary hover:text-yellow-400 transition-colors cursor-pointer"
+                  title={showConfirmPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showConfirmPassword ? '🙈' : '👁️'}
+                </button>
+              </div>
             </div>
           )}
 

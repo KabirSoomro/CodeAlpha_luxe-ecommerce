@@ -18,7 +18,14 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'Please provide name, email, and password' });
     }
 
-    const userExists = await User.findOne({ email });
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanName = name.trim();
+    const cleanPassword = password.trim();
+
+    const userExists = await User.findOne({
+      email: { $regex: new RegExp(`^${cleanEmail}$`, 'i') },
+    });
+
     if (userExists) {
       return res.status(400).json({ message: 'User already exists with this email' });
     }
@@ -28,16 +35,16 @@ const registerUser = async (req, res) => {
     const assignedRole = allowedRoles.includes(role) ? role : 'Buyer';
 
     const userData = {
-      name,
-      email,
-      password,
+      name: cleanName,
+      email: cleanEmail,
+      password: cleanPassword,
       role: assignedRole,
     };
 
     // If registering as Seller, capture store info
     if (assignedRole === 'Seller') {
-      userData.storeName = storeName || `${name}'s Store`;
-      userData.storeDescription = storeDescription || '';
+      userData.storeName = storeName ? storeName.trim() : `${cleanName}'s Boutique`;
+      userData.storeDescription = storeDescription ? storeDescription.trim() : '';
       userData.isApproved = false; // Must be approved by Admin
     }
 
@@ -61,15 +68,26 @@ const registerUser = async (req, res) => {
   }
 };
 
-// @desc    Auth user & get token
+// @desc    Auth user & get token (Robust trimming & case-insensitive matching)
 // @route   POST /api/auth/login
 // @access  Public
 const authUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
 
-    if (user && (await user.matchPassword(password))) {
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Please provide both email and password' });
+    }
+
+    const cleanEmail = String(email).trim();
+    const cleanPassword = String(password).trim();
+
+    // Case-insensitive lookup prevents common mobile / auto-capitalization login rejections
+    const user = await User.findOne({
+      email: { $regex: new RegExp(`^${cleanEmail}$`, 'i') },
+    });
+
+    if (user && (await user.matchPassword(cleanPassword))) {
       res.json({
         _id: user._id,
         name: user.name,
