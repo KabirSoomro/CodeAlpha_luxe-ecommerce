@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { useSocket } from '../context/SocketContext';
+import { formatPKR } from '../utils/currency';
 
 export default function ProductDetailModal({ product, onClose }) {
   const { addToCart } = useCart();
@@ -95,7 +96,7 @@ export default function ProductDetailModal({ product, onClose }) {
 
               {/* Price */}
               <div className="text-2xl font-serif font-bold text-amber-300 mb-4">
-                ${Number(product.price).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                {formatPKR(product.price)}
               </div>
 
               {/* Description */}
@@ -157,7 +158,7 @@ export default function ProductDetailModal({ product, onClose }) {
                     : 'bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-500 hover:from-amber-300 hover:to-yellow-400 text-black shadow-yellow-500/20 hover:scale-[1.02] active:scale-[0.98]'
                 }`}
               >
-                {isOutOfStock ? 'Sold Out' : added ? 'Added to Bag ✓' : `Add to Bag • $${(Number(product.price) * qty).toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
+                {isOutOfStock ? 'Sold Out' : added ? 'Added to Bag ✓' : `Add to Bag • ${formatPKR(Number(product.price) * qty)}`}
               </button>
             </div>
           </div>

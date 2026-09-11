@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { useSocket } from '../context/SocketContext';
+import { formatPKR } from '../utils/currency';
 
 export default function ProductCard({ product, index = 0, onSelectProduct }) {
   const { addToCart } = useCart();
@@ -98,7 +99,7 @@ export default function ProductCard({ product, index = 0, onSelectProduct }) {
           <div>
             <span className="text-xs text-luxe-secondary block font-medium">Price</span>
             <span className="text-lg font-bold text-amber-300 tracking-tight font-serif">
-              ${Number(product.price).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              {formatPKR(product.price)}
             </span>
           </div>
 

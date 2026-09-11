@@ -7,6 +7,7 @@ export function SocketProvider({ children }) {
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [stockOverrides, setStockOverrides] = useState({});
+  const [orderStatusUpdates, setOrderStatusUpdates] = useState({}); // orderId -> { orderStatus, statusHistory }
 
   // Direct DOM updater matching legacy tests and real-time reactive sync
   const updateProductStockUI = useCallback((productId, count) => {
@@ -99,6 +100,19 @@ export function SocketProvider({ children }) {
       }
     });
 
+    socketInstance.on('orderStatusUpdate', (data) => {
+      if (data && data.orderId) {
+        setOrderStatusUpdates((prev) => ({
+          ...prev,
+          [data.orderId]: {
+            orderStatus: data.orderStatus,
+            statusHistory: data.statusHistory || [],
+            updatedAt: data.updatedAt,
+          },
+        }));
+      }
+    });
+
     setSocket(socketInstance);
 
     return () => {
@@ -120,6 +134,7 @@ export function SocketProvider({ children }) {
         socket,
         isConnected,
         stockOverrides,
+        orderStatusUpdates,
         getStock,
         updateProductStockUI,
       }}

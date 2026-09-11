@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 import api from '../services/api';
+import { formatPKR } from '../utils/currency';
 
 export default function CustomerProfile({ onNavigateShop }) {
   const { user, isAuthenticated, logout, updateProfile } = useAuth();
+  const { orderStatusUpdates } = useSocket();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -257,12 +260,12 @@ export default function CustomerProfile({ onNavigateShop }) {
                         </span>
                         <span
                           className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
-                            order.isDelivered
+                            (orderStatusUpdates[order._id]?.orderStatus || order.orderStatus) === 'Delivered'
                               ? 'border-emerald-400 bg-emerald-400/10 text-emerald-400'
                               : 'border-yellow-400/40 bg-yellow-400/10 text-yellow-300'
                           }`}
                         >
-                          {order.isDelivered ? 'Delivered' : 'Vault Processing'}
+                          {orderStatusUpdates[order._id]?.orderStatus || order.orderStatus || (order.isDelivered ? 'Delivered' : 'Order Placed')}
                         </span>
                       </div>
                       <p className="text-xs text-luxe-secondary">Placed on {dateStr}</p>
@@ -272,7 +275,7 @@ export default function CustomerProfile({ onNavigateShop }) {
                       <div className="text-left sm:text-right">
                         <span className="text-[10px] text-luxe-secondary block">Total Investment</span>
                         <span className="text-base font-serif font-bold text-luxe-primary">
-                          ${Number(order.totalPrice).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                          {formatPKR(order.totalPrice)}
                         </span>
                       </div>
 
@@ -308,7 +311,7 @@ export default function CustomerProfile({ onNavigateShop }) {
                               </div>
                             </div>
                             <span className="text-xs font-bold text-amber-300 ml-3">
-                              ${(Number(item.price) * item.qty).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                              {formatPKR(Number(item.price) * item.qty)}
                             </span>
                           </div>
                         ))}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import api from '../services/api';
+import { formatPKR } from '../utils/currency';
 
 export default function AdminDashboard() {
   const { user, isAdmin, isAuthenticated } = useAuth();
@@ -320,7 +321,7 @@ export default function AdminDashboard() {
             Total Revenue
           </span>
           <span id="metric-total-revenue" className="text-3xl font-serif font-bold text-amber-300">
-            ${metrics.totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            {formatPKR(metrics.totalRevenue)}
           </span>
           <span className="text-[11px] text-luxe-secondary block mt-1">Settled transactions</span>
         </div>
@@ -410,7 +411,7 @@ export default function AdminDashboard() {
                     </td>
                     <td className="p-4 text-luxe-secondary">{prod.category}</td>
                     <td className="p-4 font-serif font-bold text-amber-300">
-                      ${Number(prod.price).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      {formatPKR(prod.price)}
                     </td>
                     <td className="p-4">
                       <span
@@ -480,7 +481,7 @@ export default function AdminDashboard() {
                       })}
                     </td>
                     <td className="p-4 font-serif font-bold text-luxe-primary">
-                      ${Number(ord.totalPrice).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      {formatPKR(ord.totalPrice)}
                     </td>
                     <td className="p-4">
                       <span

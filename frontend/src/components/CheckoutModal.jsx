@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import { formatPKR } from '../utils/currency';
 
 export default function CheckoutModal({ isOpen, onClose, onOrderPlaced, openAuthModal }) {
   const { cartItems, totalPrice, clearCart } = useCart();
@@ -116,7 +117,7 @@ export default function CheckoutModal({ isOpen, onClose, onOrderPlaced, openAuth
                 <div className="flex justify-between text-luxe-secondary">
                   <span>Total Amount:</span>
                   <span className="text-amber-300 font-bold font-serif text-sm">
-                    ${Number(placedOrder.totalPrice).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    {formatPKR(placedOrder.totalPrice)}
                   </span>
                 </div>
                 <div className="flex justify-between text-luxe-secondary">
@@ -194,7 +195,7 @@ export default function CheckoutModal({ isOpen, onClose, onOrderPlaced, openAuth
                         <span className="text-luxe-secondary">×{item.qty}</span>
                       </div>
                       <span className="text-amber-300 font-bold ml-2">
-                        ${(Number(item.price) * item.qty).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        {formatPKR(Number(item.price) * item.qty)}
                       </span>
                     </div>
                   ))}
@@ -283,7 +284,7 @@ export default function CheckoutModal({ isOpen, onClose, onOrderPlaced, openAuth
                 <div>
                   <span className="text-[11px] text-luxe-secondary block">Total Investment</span>
                   <span className="text-xl font-bold font-serif text-amber-300">
-                    ${totalPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    {formatPKR(totalPrice)}
                   </span>
                 </div>
 

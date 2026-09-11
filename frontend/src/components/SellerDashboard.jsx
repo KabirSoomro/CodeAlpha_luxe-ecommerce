@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import api from '../services/api';
+import { formatPKR } from '../utils/currency';
 
 export default function SellerDashboard({ onNavigateShop }) {
   const { user, refreshProfile } = useAuth();
@@ -12,10 +13,19 @@ export default function SellerDashboard({ onNavigateShop }) {
   const [error, setError] = useState(null);
   const [refreshingStatus, setRefreshingStatus] = useState(false);
 
+  // Tabs
+  const [activeTab, setActiveTab] = useState('inventory'); // 'inventory' | 'orders'
+  
+  // Orders State
+  const [orders, setOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+  const [orderStatusUpdating, setOrderStatusUpdating] = useState(null);
+
   // Modal states for Create / Edit
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [formError, setFormError] = useState('');
 
   // Form Fields
@@ -48,17 +58,46 @@ export default function SellerDashboard({ onNavigateShop }) {
     }
   }, [isApproved]);
 
+  const fetchSellerOrders = useCallback(async () => {
+    if (!isApproved) return;
+    setLoadingOrders(true);
+    try {
+      const data = await api.getSellerOrders();
+      setOrders(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Failed to fetch orders:', err);
+    } finally {
+      setLoadingOrders(false);
+    }
+  }, [isApproved]);
+
   useEffect(() => {
     fetchSellerProducts();
-  }, [fetchSellerProducts]);
+    fetchSellerOrders();
+  }, [fetchSellerProducts, fetchSellerOrders]);
 
   const handleRefreshStatus = async () => {
     setRefreshingStatus(true);
     try {
       await refreshProfile();
       await fetchSellerProducts();
+      await fetchSellerOrders();
     } finally {
       setTimeout(() => setRefreshingStatus(false), 600);
+    }
+  };
+
+  const handleUpdateOrderStatus = async (orderId, newStatus) => {
+    setOrderStatusUpdating(orderId);
+    try {
+      const updatedOrder = await api.updateOrderStatus(orderId, newStatus);
+      setOrders((prev) =>
+        prev.map((ord) => (ord._id === orderId ? { ...ord, orderStatus: updatedOrder.orderStatus } : ord))
+      );
+    } catch (err) {
+      alert(err.message || 'Failed to update order status');
+    } finally {
+      setOrderStatusUpdating(null);
     }
   };
 
@@ -71,7 +110,7 @@ export default function SellerDashboard({ onNavigateShop }) {
       price: '',
       countInStock: '5',
       description: '',
-      image: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=800&q=80',
+      image: '',
     });
     setFormError('');
     setIsModalOpen(true);
@@ -92,6 +131,23 @@ export default function SellerDashboard({ onNavigateShop }) {
     });
     setFormError('');
     setIsModalOpen(true);
+  };
+
+  const uploadFileHandler = async (e) => {
+    const file = e.target.files[0];
+    const formDataObj = new FormData();
+    formDataObj.append('image', file);
+    setUploading(true);
+
+    try {
+      const imagePath = await api.uploadImage(formDataObj);
+      setFormData({ ...formData, image: imagePath });
+      setUploading(false);
+    } catch (error) {
+      console.error(error);
+      setFormError('Image upload failed');
+      setUploading(false);
+    }
   };
 
   const handleFormSubmit = async (e) => {
@@ -272,16 +328,48 @@ export default function SellerDashboard({ onNavigateShop }) {
                 Boutique Vault Valuation
               </span>
               <p className="text-3xl font-serif font-bold text-amber-300">
-                ${totalVaultValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                {formatPKR(totalVaultValue)}
               </p>
             </div>
           </div>
 
-          {/* Products List */}
-          <div className="glass rounded-3xl p-6 sm:p-8 border border-luxe-glassBorder space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-serif font-bold text-luxe-primary">
+          {/* Tabs Navigation */}
+          <div className="flex space-x-4 border-b border-luxe-glassBorder">
+            <button
+              onClick={() => setActiveTab('inventory')}
+              className={`pb-4 px-2 text-sm font-bold uppercase tracking-widest transition-colors relative ${
+                activeTab === 'inventory' ? 'text-amber-300' : 'text-luxe-secondary hover:text-luxe-primary'
+              }`}
+            >
+              🛍️ Boutique Inventory
+              {activeTab === 'inventory' && (
+                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-amber-400 rounded-t-full shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('orders')}
+              className={`pb-4 px-2 text-sm font-bold uppercase tracking-widest transition-colors relative ${
+                activeTab === 'orders' ? 'text-amber-300' : 'text-luxe-secondary hover:text-luxe-primary'
+              }`}
+            >
+              📦 Order Management
+              {orders.length > 0 && (
+                <span className="ml-2 bg-amber-500/20 text-amber-300 py-0.5 px-2 rounded-full text-[10px]">
+                  {orders.length}
+                </span>
+              )}
+              {activeTab === 'orders' && (
+                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-amber-400 rounded-t-full shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
+              )}
+            </button>
+          </div>
+
+          {/* Inventory Tab Content */}
+          {activeTab === 'inventory' && (
+            <div className="glass rounded-3xl p-6 sm:p-8 border border-luxe-glassBorder space-y-6 animate-fadeIn">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-serif font-bold text-luxe-primary">
                   Your Vault Catalog
                 </h2>
                 <p className="text-xs text-luxe-secondary">
@@ -361,7 +449,7 @@ export default function SellerDashboard({ onNavigateShop }) {
                           </td>
                           <td className="py-4 text-luxe-secondary">{p.category}</td>
                           <td className="py-4 font-serif font-bold text-amber-300">
-                            ${Number(p.price).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                            {formatPKR(p.price)}
                           </td>
                           <td className="py-4">
                             <span
@@ -398,6 +486,121 @@ export default function SellerDashboard({ onNavigateShop }) {
               </div>
             )}
           </div>
+          )}
+
+          {/* Orders Tab Content */}
+          {activeTab === 'orders' && (
+            <div className="glass rounded-3xl p-6 sm:p-8 border border-luxe-glassBorder space-y-6 animate-fadeIn">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-serif font-bold text-luxe-primary">
+                    Client Orders
+                  </h2>
+                  <p className="text-xs text-luxe-secondary">
+                    Manage fulfillments and dispatch updates for your clients.
+                  </p>
+                </div>
+                <button
+                  onClick={fetchSellerOrders}
+                  disabled={loadingOrders}
+                  className="px-4 py-2 rounded-xl glass border border-luxe-glassBorder text-xs text-luxe-secondary hover:text-luxe-primary transition-all flex items-center gap-2"
+                >
+                  {loadingOrders ? '⏳ Syncing...' : '🔄 Sync Orders'}
+                </button>
+              </div>
+
+              {loadingOrders && orders.length === 0 ? (
+                <div className="py-12 text-center text-xs text-luxe-secondary">
+                  Retrieving client orders...
+                </div>
+              ) : orders.length === 0 ? (
+                <div className="py-16 text-center space-y-3">
+                  <span className="text-4xl block">📝</span>
+                  <p className="text-sm font-semibold text-luxe-primary">
+                    No orders yet
+                  </p>
+                  <p className="text-xs text-luxe-secondary max-w-sm mx-auto">
+                    When clients acquire pieces from your boutique, they will appear here for fulfillment.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {orders.map((ord) => (
+                    <div
+                      key={ord._id}
+                      className="glass rounded-2xl p-5 border border-luxe-glassBorder space-y-4"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-luxe-glassBorder pb-4">
+                        <div>
+                          <p className="text-xs font-mono font-bold text-amber-300">
+                            #{ord._id.slice(-8).toUpperCase()}
+                          </p>
+                          <p className="text-[10px] text-luxe-secondary">
+                            {new Date(ord.createdAt).toLocaleDateString()} • {ord.paymentMethod}
+                          </p>
+                        </div>
+                        <div className="text-left sm:text-right">
+                          <span className="text-[10px] text-luxe-secondary block">Total</span>
+                          <span className="text-base font-serif font-bold text-luxe-primary">
+                            {formatPKR(ord.totalPrice)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row gap-4">
+                        <div className="flex-1 space-y-2">
+                          <p className="text-[10px] uppercase font-bold text-luxe-secondary">Client</p>
+                          <p className="text-xs font-medium text-luxe-primary">{ord.user?.name}</p>
+                          <p className="text-[11px] text-luxe-secondary">{ord.user?.email}</p>
+                          <p className="text-[10px] text-luxe-secondary max-w-xs mt-1">
+                            {ord.shippingAddress?.address}, {ord.shippingAddress?.city}, {ord.shippingAddress?.country}
+                          </p>
+                        </div>
+                        <div className="flex-1 space-y-2">
+                          <p className="text-[10px] uppercase font-bold text-luxe-secondary">Items</p>
+                          <div className="space-y-1">
+                            {ord.orderItems.map((item, idx) => (
+                              <div key={idx} className="flex justify-between text-[11px]">
+                                <span className="text-luxe-primary truncate pr-2">
+                                  {item.qty}x {item.name}
+                                </span>
+                                <span className="text-amber-300 whitespace-nowrap">
+                                  {formatPKR(item.price * item.qty)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex-1 space-y-2">
+                          <p className="text-[10px] uppercase font-bold text-luxe-secondary">Fulfillment Status</p>
+                          <select
+                            value={ord.orderStatus || 'Order Placed'}
+                            onChange={(e) => handleUpdateOrderStatus(ord._id, e.target.value)}
+                            disabled={orderStatusUpdating === ord._id}
+                            className={`w-full bg-black/20 border border-luxe-glassBorder rounded-xl px-3 py-2 text-xs font-bold transition-all focus:outline-none focus:border-yellow-500/50 ${
+                              ord.orderStatus === 'Delivered'
+                                ? 'text-emerald-400 bg-emerald-500/10'
+                                : 'text-amber-300'
+                            }`}
+                          >
+                            <option value="Order Placed">Order Placed</option>
+                            <option value="Processing">Processing</option>
+                            <option value="Pack Ready">Pack Ready</option>
+                            <option value="Shipped">Shipped</option>
+                            <option value="Out for Delivery">Out for Delivery</option>
+                            <option value="Delivered">Delivered</option>
+                          </select>
+                          {orderStatusUpdating === ord._id && (
+                            <p className="text-[10px] text-yellow-400 animate-pulse mt-1">Updating...</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </>
       )}
 
@@ -506,15 +709,20 @@ export default function SellerDashboard({ onNavigateShop }) {
 
               <div>
                 <label className="block text-luxe-secondary font-medium mb-1">
-                  Image URL
+                  Product Image
                 </label>
-                <input
-                  type="url"
-                  value={formData.image}
-                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                  placeholder="https://images.unsplash.com/..."
-                  className="w-full bg-black/20 dark:bg-white/5 border border-luxe-glassBorder rounded-xl px-3.5 py-2 text-luxe-primary focus:outline-none focus:border-yellow-500/50"
-                />
+                <div className="flex items-center gap-3">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={uploadFileHandler}
+                    className="w-full bg-black/20 dark:bg-white/5 border border-luxe-glassBorder rounded-xl px-3.5 py-2 text-luxe-primary focus:outline-none focus:border-yellow-500/50 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-yellow-50/10 file:text-yellow-400 hover:file:bg-yellow-50/20"
+                  />
+                  {uploading && <span className="text-xs text-yellow-400">Uploading...</span>}
+                </div>
+                {formData.image && !uploading && (
+                  <div className="mt-2 text-[10px] text-emerald-400">Image successfully uploaded/linked.</div>
+                )}
               </div>
 
               <div>

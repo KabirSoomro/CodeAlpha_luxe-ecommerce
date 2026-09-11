@@ -34,7 +34,7 @@ const sampleProducts = [
     brand: 'Rolex',
     category: 'Watches',
     description: 'The Oyster Perpetual Submariner Date in Oystersteel with a Cerachrom bezel insert in black ceramic and a black dial with large luminescent hour markers. Waterproof to 300 meters.',
-    price: 14500.00,
+    price: 4050000.00, // Rs. 4,050,000
     countInStock: 8,
     rating: 4.9,
     averageRating: 4.9,
@@ -46,7 +46,7 @@ const sampleProducts = [
     brand: 'Audemars Piguet',
     category: 'Watches',
     description: 'Selfwinding watch with date display and centre seconds. Stainless steel case, glareproofed sapphire crystal and caseback, Grande Tapisserie patterned dial, and integrated bracelet.',
-    price: 29800.00,
+    price: 8300000.00, // Rs. 8,300,000
     countInStock: 5,
     rating: 4.9,
     averageRating: 4.9,
@@ -58,7 +58,7 @@ const sampleProducts = [
     brand: 'Cartier',
     category: 'Jewelry',
     description: 'A child of 1970s New York, the LOVE collection remains today an iconic symbol of love that transgresses convention. 18K yellow gold with matching screwdriver.',
-    price: 7350.00,
+    price: 2050000.00, // Rs. 2,050,000
     countInStock: 12,
     rating: 4.8,
     averageRating: 4.8,
@@ -70,7 +70,7 @@ const sampleProducts = [
     brand: 'Van Cleef & Arpels',
     category: 'Jewelry',
     description: 'Faithful to the very first Alhambra jewel created in 1968, the Vintage Alhambra creations by Van Cleef & Arpels are distinguished by their unique, timeless elegance with guilloché yellow gold.',
-    price: 4200.00,
+    price: 1170000.00, // Rs. 1,170,000
     countInStock: 10,
     rating: 4.8,
     averageRating: 4.8,
@@ -82,7 +82,7 @@ const sampleProducts = [
     brand: 'Hermès',
     category: 'Leather Goods',
     description: 'Handcrafted from signature grained Togo calfskin with gold palladium hardware. Features double rolled top handles, clochette, lock, and keys.',
-    price: 19500.00,
+    price: 5450000.00, // Rs. 5,450,000
     countInStock: 3,
     rating: 5.0,
     averageRating: 5.0,
@@ -94,7 +94,7 @@ const sampleProducts = [
     brand: 'Louis Vuitton',
     category: 'Leather Goods',
     description: 'The iconic Keepall 50 duffle bag in signature Monogram Eclipse coated canvas with natural cowhide leather trim and silver-color metallic hardware.',
-    price: 2650.00,
+    price: 740000.00, // Rs. 740,000
     countInStock: 15,
     rating: 4.7,
     averageRating: 4.7,
@@ -106,7 +106,7 @@ const sampleProducts = [
     brand: 'Tom Ford',
     category: 'Accessories',
     description: 'Bold vintage-inspired square acetate sunglasses featuring the signature metal T detail inserted into the temples. 100% UV protection Barberini tempered mineral glass lenses.',
-    price: 495.00,
+    price: 138000.00, // Rs. 138,000
     countInStock: 20,
     rating: 4.6,
     averageRating: 4.6,
@@ -118,7 +118,7 @@ const sampleProducts = [
     brand: 'Gucci',
     category: 'Accessories',
     description: 'Reversible smooth Italian leather belt featuring the iconic Double G buckle in antiqued brass hardware. Reversible from black to dusty pink.',
-    price: 550.00,
+    price: 153000.00, // Rs. 153,000
     countInStock: 18,
     rating: 4.8,
     averageRating: 4.8,
@@ -130,7 +130,7 @@ const sampleProducts = [
     brand: 'Bowers & Wilkins',
     category: 'Accessories',
     description: 'Flagship wireless noise-cancelling headphones crafted from cast aluminium arms and fine Nappa leather. Bespoke 40mm Carbon Cone drive units deliver pristine high-resolution audio.',
-    price: 699.00,
+    price: 195000.00, // Rs. 195,000
     countInStock: 14,
     rating: 4.9,
     averageRating: 4.9,

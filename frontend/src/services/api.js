@@ -13,9 +13,12 @@ function getAuthToken() {
 async function request(endpoint, options = {}) {
   const url = `${BASE_URL}${endpoint}`;
   const headers = {
-    'Content-Type': 'application/json',
     ...(options.headers || {}),
   };
+
+  if (!(options.body instanceof FormData)) {
+    headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+  }
 
   const token = getAuthToken();
   if (token && !headers['Authorization']) {
@@ -27,7 +30,7 @@ async function request(endpoint, options = {}) {
     headers,
   };
 
-  if (config.body && typeof config.body === 'object') {
+  if (config.body && typeof config.body === 'object' && !(config.body instanceof FormData)) {
     config.body = JSON.stringify(config.body);
   }
 
@@ -83,6 +86,9 @@ export const api = {
   // Orders
   createOrder: (orderData) => api.post('/api/orders', orderData),
   getMyOrders: () => api.get('/api/orders/myorders'),
+  getOrderById: (id) => api.get(`/api/orders/${id}`),
+  getSellerOrders: () => api.get('/api/orders/sellerorders'),
+  updateOrderStatus: (id, status, note = '') => api.put(`/api/orders/${id}/status`, { status, note }),
   getAllOrders: () => api.get('/api/orders'),
   deliverOrder: (id) => api.put(`/api/orders/${id}/deliver`),
 
@@ -93,6 +99,9 @@ export const api = {
   getAllSellers: () => api.get('/api/admin/sellers'),
   approveSeller: (id) => api.put(`/api/admin/sellers/${id}/approve`),
   rejectSeller: (id) => api.put(`/api/admin/sellers/${id}/reject`),
+
+  // Upload
+  uploadImage: (formData) => api.post('/api/upload', formData),
 };
 
 export default api;

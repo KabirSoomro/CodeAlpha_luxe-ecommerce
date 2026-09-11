@@ -1,10 +1,20 @@
 const mongoose = require('mongoose');
 
+const statusHistorySchema = new mongoose.Schema({
+  status: { type: String, required: true },
+  updatedAt: { type: Date, default: Date.now },
+  note: { type: String, default: '' },
+});
+
 const orderSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
+      ref: 'User',
+    },
+    seller: {
+      type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
     },
     orderItems: [
@@ -55,6 +65,13 @@ const orderSchema = new mongoose.Schema(
     deliveredAt: {
       type: Date,
     },
+    // Real-time order tracking status
+    orderStatus: {
+      type: String,
+      enum: ['Order Placed', 'Processing', 'Pack Ready', 'Shipped', 'Out for Delivery', 'Delivered'],
+      default: 'Order Placed',
+    },
+    statusHistory: [statusHistorySchema],
   },
   {
     timestamps: true,
@@ -62,6 +79,8 @@ const orderSchema = new mongoose.Schema(
 );
 
 orderSchema.index({ user: 1 });
+orderSchema.index({ seller: 1 });
+orderSchema.index({ orderStatus: 1 });
 
 const Order = mongoose.model('Order', orderSchema);
 module.exports = Order;

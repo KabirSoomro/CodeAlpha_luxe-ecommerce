@@ -72,23 +72,30 @@ const addOrderItems = async (req, res) => {
         product: productId,
         qty: item.qty,
         newStock: updatedProduct.countInStock,
+        sellerId: updatedProduct.user, // Track seller from product
       });
     }
+
+    // Determine seller from first product (single seller per order for now)
+    const sellerIdFromProduct = decrementedItems[0]?.sellerId;
 
     // 4. Create and save order in MongoDB
     const order = new Order({
       orderItems,
       user: req.user._id,
+      seller: sellerIdFromProduct || null,
       shippingAddress: shippingAddress || {
         address: '123 Luxe Blvd',
-        city: 'New York',
-        postalCode: '10001',
-        country: 'USA',
+        city: 'Karachi',
+        postalCode: '75500',
+        country: 'Pakistan',
       },
-      paymentMethod: paymentMethod || 'CreditCard',
+      paymentMethod: paymentMethod || 'CashOnDelivery',
       totalPrice: totalPrice !== undefined ? Number(totalPrice) : 0,
       isPaid: true,
       paidAt: Date.now(),
+      orderStatus: 'Order Placed',
+      statusHistory: [{ status: 'Order Placed', updatedAt: new Date(), note: 'Order successfully placed' }],
     });
 
     const createdOrder = await order.save();
@@ -102,6 +109,12 @@ const addOrderItems = async (req, res) => {
           newStock: dec.newStock,
         });
       }
+      // Notify seller of new order
+      io.emit('newOrder', {
+        orderId: createdOrder._id.toString(),
+        sellerId: sellerIdFromProduct ? sellerIdFromProduct.toString() : null,
+        orderStatus: 'Order Placed',
+      });
     }
 
     res.status(201).json(createdOrder);
@@ -138,6 +151,96 @@ const getMyOrders = async (req, res) => {
   }
 };
 
+// @desc    Get a single order by ID (buyer can see their own, seller/admin can see all)
+// @route   GET /api/orders/:id
+// @access  Private
+const getOrderById = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id).populate('user', 'name email');
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+    // Allow buyer to see their own orders, admin/seller to see any
+    const isOwner = order.user._id.toString() === req.user._id.toString();
+    const isAdminOrSeller = req.user.role === 'Admin' || (req.user.role === 'Seller' && req.user.isApproved);
+    if (!isOwner && !isAdminOrSeller) {
+      return res.status(401).json({ message: 'Not authorized to view this order' });
+    }
+    res.json(order);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get all orders for the logged-in seller's products
+// @route   GET /api/orders/sellerorders
+// @access  Private/ApprovedSeller
+const getSellerOrders = async (req, res) => {
+  try {
+    // Find orders where seller field matches OR where any orderItem product belongs to this seller
+    const sellerProducts = await Product.find({ user: req.user._id }).select('_id');
+    const sellerProductIds = sellerProducts.map(p => p._id);
+
+    const orders = await Order.find({
+      $or: [
+        { seller: req.user._id },
+        { 'orderItems.product': { $in: sellerProductIds } },
+      ],
+    })
+      .populate('user', 'name email')
+      .sort({ createdAt: -1 });
+
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update order status (Seller or Admin)
+// @route   PUT /api/orders/:id/status
+// @access  Private/ApprovedSeller or Admin
+const updateOrderStatus = async (req, res) => {
+  try {
+    const { status, note } = req.body;
+    const validStatuses = ['Order Placed', 'Processing', 'Pack Ready', 'Shipped', 'Out for Delivery', 'Delivered'];
+
+    if (!status || !validStatuses.includes(status)) {
+      return res.status(400).json({ message: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
+    }
+
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    order.orderStatus = status;
+    order.statusHistory.push({ status, updatedAt: new Date(), note: note || '' });
+
+    // Auto-set isDelivered when status is Delivered
+    if (status === 'Delivered') {
+      order.isDelivered = true;
+      order.deliveredAt = Date.now();
+    }
+
+    const updatedOrder = await order.save();
+
+    // Real-time broadcast to buyer
+    const io = req.app.get('io') || req.io;
+    if (io) {
+      io.emit('orderStatusUpdate', {
+        orderId: order._id.toString(),
+        orderStatus: status,
+        statusHistory: order.statusHistory,
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
+    res.json(updatedOrder);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Get all orders
 // @route   GET /api/orders
 // @access  Private/Admin
@@ -165,8 +268,22 @@ const deliverOrder = async (req, res) => {
 
     order.isDelivered = true;
     order.deliveredAt = Date.now();
+    order.orderStatus = 'Delivered';
+    order.statusHistory.push({ status: 'Delivered', updatedAt: new Date(), note: 'Marked delivered by Admin' });
 
     const updatedOrder = await order.save();
+
+    // Real-time broadcast
+    const io = req.app.get('io') || req.io;
+    if (io) {
+      io.emit('orderStatusUpdate', {
+        orderId: order._id.toString(),
+        orderStatus: 'Delivered',
+        statusHistory: order.statusHistory,
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
     res.json(updatedOrder);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -176,6 +293,9 @@ const deliverOrder = async (req, res) => {
 module.exports = {
   addOrderItems,
   getMyOrders,
+  getOrderById,
+  getSellerOrders,
+  updateOrderStatus,
   getAllOrders,
   deliverOrder,
 };

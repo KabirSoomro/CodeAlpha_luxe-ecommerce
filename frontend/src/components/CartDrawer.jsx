@@ -1,5 +1,6 @@
 import React from 'react';
 import { useCart } from '../context/CartContext';
+import { formatPKR } from '../utils/currency';
 
 export default function CartDrawer({ isOpen, onClose, onProceedToCheckout }) {
   const {
@@ -86,7 +87,7 @@ export default function CartDrawer({ isOpen, onClose, onProceedToCheckout }) {
                         {item.name}
                       </h4>
                       <p className="text-xs font-bold text-amber-300 mt-0.5">
-                        ${Number(item.price).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        {formatPKR(item.price)}
                       </p>
                     </div>
 
@@ -137,21 +138,21 @@ export default function CartDrawer({ isOpen, onClose, onProceedToCheckout }) {
                 <div className="flex justify-between text-luxe-secondary">
                   <span>Subtotal</span>
                   <span className="text-luxe-primary font-medium">
-                    ${subtotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    {formatPKR(subtotal)}
                   </span>
                 </div>
                 <div className="flex justify-between text-luxe-secondary">
                   <span>White-Glove Insured Delivery</span>
-                  <span className="text-emerald-400 font-medium">Complimentary ($0.00)</span>
+                  <span className="text-emerald-400 font-medium">Complimentary (Rs. 0)</span>
                 </div>
                 <div className="flex justify-between text-luxe-secondary">
                   <span>Estimated Tax</span>
-                  <span className="text-luxe-primary font-medium">Included ($0.00)</span>
+                  <span className="text-luxe-primary font-medium">Included (Rs. 0)</span>
                 </div>
                 <div className="pt-2 border-t border-luxe-glassBorder flex justify-between text-sm font-bold">
                   <span className="text-luxe-primary font-serif">Total Order</span>
                   <span className="text-amber-300 font-serif text-lg">
-                    ${totalPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    {formatPKR(totalPrice)}
                   </span>
                 </div>
               </div>
