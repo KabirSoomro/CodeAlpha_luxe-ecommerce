@@ -166,13 +166,32 @@ const seedDefaultData = async () => {
       });
       console.log(`[Seeder] Admin account ${adminEmail} created.`);
     } else {
-      // Ensure role is Admin
+      // Sync role and password if needed
+      let needsSave = false;
       if (existing.role !== 'Admin') {
         existing.role = 'Admin';
+        needsSave = true;
+      }
+      
+      const bcrypt = require('bcryptjs');
+      const isMatch = await bcrypt.compare(adminPassword, existing.password);
+      if (!isMatch) {
+        existing.password = adminPassword; // Pre-save hook will hash this
+        needsSave = true;
+      }
+      
+      if (existing.name !== adminName) {
+         existing.name = adminName;
+         needsSave = true;
+      }
+
+      if (needsSave) {
         await existing.save();
+        console.log(`[Seeder] Admin account ${adminEmail} updated from env vars.`);
+      } else {
+        console.log(`[Seeder] Admin account ${adminEmail} already up to date.`);
       }
       adminUser = existing;
-      console.log(`[Seeder] Admin account ${adminEmail} already exists.`);
     }
 
     // Ensure admin has an accountId
